@@ -79,7 +79,7 @@ export function LoginPage() {
                     className="w-full py-3 rounded-xl bg-emerald-500 text-white font-medium
                     hover:bg-emerald-600 active:scale-[0.98]
                     disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 disabled:active:scale-100
-                    transition pointer"
+                    transition cursor-pointer"
                 >
                     {loading ? 'Проверка...' : 'Войти'}
                 </button>
