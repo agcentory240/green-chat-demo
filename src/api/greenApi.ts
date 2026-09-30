@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import type { Chat } from '../types/chat';
 import type { InstanceResponse, InstanceState } from '../types/instance';
+import type { Message } from '../types/message';
 
 const API_URL = '/api'  //Это только для дев
 
@@ -40,4 +41,18 @@ export async function getChatList(idInstance: string, apiToken: string): Promise
     const url = `${API_URL}/waInstance${idInstance}/getChats/${apiToken}`
     const response = await axios.get<Chat[]>(url)
     return response.data
+}
+
+/**
+ * Получения сообщений из чата
+ * @param idInstance 
+ * @param apiToken 
+ * @param chatId 
+ * @param count 
+ * @returns 
+ */
+export async function getChatHistory(idInstance: string, apiToken: string, chatId: string, count = 50): Promise<Message[]> {
+  const url = `${API_URL}/waInstance${idInstance}/getChatHistory/${apiToken}`
+  const response = await axios.post<Message[]>(url, { chatId, count })
+  return response.data
 }
