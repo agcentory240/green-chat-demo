@@ -38,7 +38,7 @@ export function MessageBubble({ message }: { message: Message }) {
  * timestamp в GREEN-API — в секундах, не в миллисекундах!
  */
 function formatTime(timestamp: number): string {
-  const date = new Date(timestamp * 1000)  // ← * 1000, потому что секунды
+  const date = new Date(timestamp * 1000)  // * 1000, потому что секунды
   const hh = String(date.getHours()).padStart(2, '0')
   const mm = String(date.getMinutes()).padStart(2, '0')
   return `${hh}:${mm}`

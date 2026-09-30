@@ -1,4 +1,4 @@
-export type ChatType = 'user' | 'bot' | 'group'
+export type ChatType = 'user' | 'bot' | 'group' | 'channel'
 
 export interface Chat {
     chatId: string

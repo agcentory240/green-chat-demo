@@ -3,6 +3,7 @@ import type { Chat } from '../types/chat';
 import type { InstanceResponse, InstanceState } from '../types/instance';
 import type { Message, SendMessageResponse } from '../types/message';
 import type { CheckAccountResponse } from '../types/checkAccount';
+import type { Notification } from '../types/notification'
 
 const API_URL = '/api'  //Это только для дев
 
@@ -59,7 +60,7 @@ export async function getChatList(idInstance: string, apiToken: string): Promise
  * @param count 
  * @returns 
  */
-export async function getChatHistory(idInstance: string, apiToken: string, chatId: string, count = 50): Promise<Message[]> {
+export async function getChatHistory(idInstance: string, apiToken: string, chatId: string, count = 5): Promise<Message[]> {
     const url = `${API_URL}/waInstance${idInstance}/getChatHistory/${apiToken}`
     const response = await axios.post<Message[]>(url, { chatId, count })
     return response.data
@@ -126,4 +127,23 @@ export async function sendMessage(idInstance: string, apiToken: string, chatId: 
 
         throw new Error(`Ошибка ${error.response.status}`)
     }
+}
+
+/**
+ * Получить одно уведомление из очереди.
+ * Возвращает null, если уведомлений нет (таймаут).
+ */
+export async function receiveNotification( idInstance: string, apiToken: string, receiveTimeout = 5, ): Promise<Notification | null> {
+  const url = `${API_URL}/waInstance${idInstance}/receiveNotification/${apiToken}?receiveTimeout=${receiveTimeout}`
+  const response = await axios.get<Notification | null>(url)
+  return response.data
+}
+
+/**
+ * Удалить уведомление из очереди (подтвердить обработку).
+ */
+export async function deleteNotification( idInstance: string, apiToken: string, receiptId: number, ): Promise<{ result: boolean }> {
+  const url = `${API_URL}/waInstance${idInstance}/deleteNotification/${apiToken}/${receiptId}`
+  const response = await axios.delete<{ result: boolean }>(url)
+  return response.data
 }

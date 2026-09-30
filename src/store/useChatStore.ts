@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { checkAccount, getChatHistory, getChatList, sendMessage } from '../api/greenApi'
 import type { Message } from '../types/message'
 import type { Chat } from '../types/chat'
+import type { IncomingTextNotification } from '../types/notification'
 
 // Ключ в сессии
 const STORAGE_KEY = 'green-api-credentials'
@@ -29,6 +30,7 @@ interface ChatState {
   loadMessages: (chatId: string) => Promise<void>
   findOrCreateChat: (phoneNumber: string) => Promise<Chat>
   sendMessage: (text: string) => Promise<void>
+  addIncomingMessage: (notification: IncomingTextNotification) => void
 }
 
 
@@ -172,6 +174,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
       chatId: activeChatId,
       chatType: 'user',
       textMessage: trimmed,
+    }
+
+    set({ messages: [...get().messages, newMessage] })
+  },
+
+  addIncomingMessage: (notification: IncomingTextNotification) => {
+    // Проверяем, что это сообщение для активного чата
+    if (notification.senderData.chatId !== get().activeChatId) return
+
+    const newMessage: Message = {
+      idMessage: notification.idMessage,
+      timestamp: notification.timestamp,
+      type: 'incoming',
+      typeMessage: 'textMessage',
+      chatId: notification.senderData.chatId,
+      chatType: notification.senderData.chatType,
+      textMessage: notification.messageData.textMessageData.textMessage,
+      senderName: notification.senderData.senderName,
     }
 
     set({ messages: [...get().messages, newMessage] })
