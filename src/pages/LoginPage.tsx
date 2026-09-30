@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useChatStore } from '../store/useChatStore'
-import { getStateInstance, type InstanceResponse } from '../api/greenApi'
+import { getStateInstance} from '../api/greenApi'
 import { Toast } from '../components/Toast'
+import type { InstanceResponse } from '../types/instance'
 
 export function LoginPage() {
     const [error, setError] = useState<string | null>(null)

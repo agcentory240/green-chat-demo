@@ -1,33 +1,9 @@
 import axios, { AxiosError } from 'axios'
+import type { Chat } from '../types/chat';
+import type { InstanceResponse, InstanceState } from '../types/instance';
 
 const API_URL = '/api'  //Это только для дев
 
-
-export type InstanceState =
-    | 'authorized'
-    | 'notAuthorized'
-    | 'blocked'
-    | 'starting'
-    | 'suspended'
-    | 'pendingPassword'
-    | null
-
-export type InstanceResponse = {
-    ok: boolean;
-    state: InstanceState;
-    error?: string
-}
-
-
-export type ChatType = 'user' | 'bot' | 'group'
-
-export interface Chat {
-    chatId: string
-    name: string
-    type: ChatType
-    phoneNumber: number
-    unreadCount: number
-}
 
 /**
  * Проверка состояния ид и токена
