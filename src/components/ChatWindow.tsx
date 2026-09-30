@@ -1,9 +1,14 @@
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
+import { useChatStore } from '../store/useChatStore'
+import { useEffect } from 'react'
+import type { Chat } from '../api/greenApi'
 
 export function ChatWindow() {
-  // TODO: взять активный чат из zustand
-  const activeChat: { id: string; name: string } | null = null
+
+  const activeChatId = useChatStore((s) => s.activeChatId)
+  const chats = useChatStore((s) => s.chats)
+  const activeChat = chats.find((c) => c.chatId === activeChatId) ?? null
 
   if (!activeChat) {
     return (
