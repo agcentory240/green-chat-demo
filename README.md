@@ -1,32 +1,135 @@
-# React + TypeScript + Vite
+Держи `README.md`. Написан так, чтобы **проверяющий** мог запустить проект **без вопросов** — и чтобы было видно, что ты **думал** о деталях.
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+```markdown
+# Green Chat — тестовое задание
 
-Currently, two official plugins are available:
+Веб-чат для отправки и получения текстовых сообщений в мессенджере **MAX** через **GREEN-API**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Стек
 
-## React Compiler
+- **React 19** + **TypeScript**
+- **Vite** — сборка и dev-сервер
+- **Zustand** — управление состоянием
+- **React Router** — роутинг
+- **Tailwind CSS 4** — стили
+- **Axios** — HTTP-запросы к GREEN-API
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Функционал
 
-## Expanding the Oxlint configuration
+- Авторизация по `idInstance` и `apiTokenInstance` с проверкой через `getStateInstance`
+- Хранение учётных данных в `sessionStorage`
+- Список чатов (`GetChats`)
+- Просмотр истории сообщений (`GetChatHistory`)
+- Отправка текстовых сообщений (`SendMessage`)
+- Получение входящих сообщений через HTTP-поллинг (`ReceiveNotification` + `DeleteNotification`)
+- Создание нового чата по номеру телефона через `CheckAccount`
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
+## Запуск локально
+
+### 1. Установка зависимостей
+
+```bash
+npm install
+```
+
+### 2. Настройка прокси
+
+GREEN-API **не отдаёт CORS-заголовки** для браузерных запросов, поэтому в dev-режиме используется прокси Vite.
+
+Прокси уже настроен в `vite.config.ts`:
+
+```ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'https://api.green-api.com',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+    },
   },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
 }
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### 3. Запуск dev-сервера
+
+```bash
+npm run dev
+```
+
+Приложение откроется на `http://localhost:5173`.
+
+## Настройка GREEN-API
+
+### 1. Получение учётных данных
+
+1. Зарегистрироваться на [green-api.com](https://green-api.com).
+2. Создать инстанс (бесплатный тариф подойдёт).
+3. Скопировать **`idInstance`** и **`apiTokenInstance`** из личного кабинета.
+4. Авторизовать инстанс — отсканировать QR-код через приложение MAX.
+
+### 2. Включение входящих уведомлений
+
+> **Важно:** без этого шага входящие сообщения **не будут** приходить.
+
+Чтобы получать входящие уведомления, нужно включить настройку одним из способов:
+
+**Через личный кабинет:**
+- Включить настройку **«Получать уведомления о входящих сообщениях и файлах»**.
+
+**Через метод `SetSettings`:**
+- Вызвать метод с параметром `incomingWebhook: "yes"`.
+
+### 3. Вход в приложение
+
+1. Открыть `http://localhost:5173`.
+2. Ввести `idInstance` и `apiTokenInstance`.
+3. Нажать «Войти» — приложение проверит инстанс через `getStateInstance`.
+
+## Как проверить работу
+
+### Отправка сообщения
+
+1. Войти в приложение.
+2. Нажать «+» в сайдбаре → ввести номер телефона получателя.
+3. Если аккаунт есть в MAX — чат создастся и откроется.
+4. Написать сообщение → «Отправить».
+
+### Получение сообщения
+
+1. Попросить получателя ответить в MAX **или** написать самому себе с другого устройства.
+2. Сообщение появится в чате автоматически (поллинг каждые 2 секунды).
+
+> **Примечание:** при отправке сообщения **самому себе** через приложение MAX приходит уведомление `outgoingMessageReceived` — оно **игнорируется**, так как приложение обрабатывает только `incomingMessageReceived`. Для проверки входящих нужно, чтобы написал **другой** пользователь.
+
+## Архитектура
+
+```
+src/
+├── api/
+│   └── greenApi.ts          # функции-запросы к GREEN-API
+├── components/
+│   ├── ChatWindow.tsx       # окно активного чата
+│   ├── MessageInput.tsx     # поле ввода и отправка
+│   ├── MessageList.tsx      # список сообщений
+│   ├── NewChatModal.tsx     # модалка создания чата
+│   ├── RequireAuth.tsx      # guard для /chat
+│   ├── Sidebar.tsx          # список чатов
+│   ├── SidebarHeader.tsx    # шапка сайдбара
+│   └── Toast.tsx            # всплывающее уведомление об ошибке
+├── hooks/
+│   └── polling.ts           # хук поллинга уведомлений
+├── layouts/
+│   └── AppLayout.tsx        # общий layout с фоном
+├── pages/
+│   ├── ChatPage.tsx         # страница чата
+│   └── LoginPage.tsx        # страница авторизации
+├── store/
+│   └── useChatStore.ts      # zustand-стор
+└── types/
+    ├── chat.ts              # Chat, ChatType
+    ├── instance.ts          # InstanceState, InstanceResponse
+    ├── message.ts           # Message, SendMessageResponse
+    ├── notification.ts      # уведомления GREEN-API
+    └── checkAccount.ts      # CheckAccountResponse
+```

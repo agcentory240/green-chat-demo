@@ -16,11 +16,24 @@ export function LoginPage() {
     //Отправка формы
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
+        setError(null);
         checkToken().then((result: InstanceResponse) => {
-            //Все ок, переходим
-            //console.log("result",result)
-            setCredentials({ idInstance, apiToken })
-            navigate('/chat')
+            console.log("result",result)
+            if (!result.ok) {
+                setError(result.error ?? 'Не удалось проверить данные');
+                return;
+            }
+
+            // Если state не authorized — тоже ошибка
+            if (result.state !== 'authorized') {
+                setError(`Инстанс в состоянии: ${result.state}. Авторизуйте его в личном кабинете.`);
+                return;
+            }
+
+            // Всё ок
+            setCredentials({ idInstance, apiToken });
+            navigate('/chat');
         }).catch((error: InstanceResponse) => {
             //Ошибка, уведомим
             console.error("error", error);
@@ -33,8 +46,7 @@ export function LoginPage() {
 
     //Проверка данных
     function checkToken(): Promise<InstanceResponse> {
-        setLoading(true);
-        return getStateInstance(idInstance, apiToken).finally(() => { setLoading(true); });
+        return getStateInstance(idInstance, apiToken);
     }
 
     //Скроем тоаст

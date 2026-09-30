@@ -56,7 +56,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chatsLoading: false,
   messagesLoading: false,
 
-  setCredentials: (c) => { /* ... */ },
+  setCredentials: (c) => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(c))
+    set({ credentials: c })
+  },
   clearCredentials: () => {
     sessionStorage.removeItem(STORAGE_KEY)
     set({ credentials: null, chats: [], activeChatId: null })
