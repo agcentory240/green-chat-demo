@@ -13,13 +13,15 @@ export function Sidebar() {
   const activeChatId = useChatStore((s) => s.activeChatId)
   const setActiveChat = useChatStore((s) => s.setActiveChat)
 
+  const [modalOpen, setModalOpen] = useState(false)
+
   useEffect(() => {
     loadChats()
   }, [loadChats])
 
   return (
     <aside className="w-72 border-r border-gray-100 flex flex-col bg-white">
-      <SidebarHeader />
+      <SidebarHeader onNewChat={() => setModalOpen(true)}  />
 
       <div className="flex-1 overflow-y-auto">
         {chatsLoading && (
@@ -46,7 +48,7 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* <NewChatModal open={modalOpen} onClose={() => setModalOpen(false)} /> */}
+      <NewChatModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </aside>
   )
 }

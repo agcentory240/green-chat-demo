@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getChatHistory, getChatList } from '../api/greenApi'
+import { checkAccount, getChatHistory, getChatList, sendMessage } from '../api/greenApi'
 import type { Message } from '../types/message'
 import type { Chat } from '../types/chat'
 
@@ -27,6 +27,8 @@ interface ChatState {
   setActiveChat: (id: string | null) => void
   loadChats: () => Promise<void>
   loadMessages: (chatId: string) => Promise<void>
+  findOrCreateChat: (phoneNumber: string) => Promise<Chat>
+  sendMessage: (text: string) => Promise<void>
 }
 
 
@@ -101,4 +103,78 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ messagesLoading: false })
     }
   },
+
+  findOrCreateChat: async (phoneNumber: string) => {
+    const credentials = get().credentials
+    if (!credentials) throw new Error('Нет авторизации')
+
+    const normalized = phoneNumber.replace(/\D/g, '')
+    if (!normalized) throw new Error('Введите номер телефона')
+
+    // 1. Поиск в существующих чатах
+    const existing = get().chats.find(
+      (c) => c.phoneNumber === Number(normalized),
+    )
+    if (existing) {
+      set({ activeChatId: existing.chatId, messages: [] })
+      return existing
+    }
+
+    // 2. Проверка аккаунта
+    const result = await checkAccount(
+      credentials.idInstance,
+      credentials.apiToken,
+      normalized,
+    )
+
+    if (!result.exist || !result.chatId) {
+      throw new Error('Аккаунт MAX не найден на этом номере')
+    }
+
+    // 3. Создание локального чата
+    const newChat: Chat = {
+      chatId: result.chatId,
+      name: normalized,
+      type: 'user',
+      phoneNumber: Number(normalized),
+      unreadCount: 0,
+    }
+
+    set({
+      chats: [newChat, ...get().chats],
+      activeChatId: newChat.chatId,
+      messages: [],
+    })
+    return newChat
+  },
+
+  sendMessage: async (text: string) => {
+    const credentials = get().credentials
+    const activeChatId = get().activeChatId
+    if (!credentials || !activeChatId) throw new Error('Нет активного чата')
+
+    const trimmed = text.trim()
+    if (!trimmed) return
+
+    const result = await sendMessage(
+      credentials.idInstance,
+      credentials.apiToken,
+      activeChatId,
+      trimmed,
+    )
+
+    // Успех — добавляем сообщение в список
+    const newMessage: Message = {
+      idMessage: result.idMessage,
+      timestamp: Math.floor(Date.now() / 1000),  // yt jxtym ghfdbkmyj
+      type: 'outgoing',
+      typeMessage: 'textMessage',
+      chatId: activeChatId,
+      chatType: 'user',
+      textMessage: trimmed,
+    }
+
+    set({ messages: [...get().messages, newMessage] })
+  },
+
 }))

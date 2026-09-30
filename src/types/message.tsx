@@ -29,5 +29,8 @@ export interface Message {
   senderName?: string
   senderType?: ChatType
   senderContactName?: string
-  // ... остальные поля по необходимости
+}
+
+export interface SendMessageResponse {
+  idMessage: string
 }

@@ -1,9 +1,17 @@
 import axios, { AxiosError } from 'axios'
 import type { Chat } from '../types/chat';
 import type { InstanceResponse, InstanceState } from '../types/instance';
-import type { Message } from '../types/message';
+import type { Message, SendMessageResponse } from '../types/message';
+import type { CheckAccountResponse } from '../types/checkAccount';
 
 const API_URL = '/api'  //Это только для дев
+
+interface GreenApiError {
+    statusCode: number
+    timestamp: string
+    path: string
+    message: string
+}
 
 
 /**
@@ -52,7 +60,70 @@ export async function getChatList(idInstance: string, apiToken: string): Promise
  * @returns 
  */
 export async function getChatHistory(idInstance: string, apiToken: string, chatId: string, count = 50): Promise<Message[]> {
-  const url = `${API_URL}/waInstance${idInstance}/getChatHistory/${apiToken}`
-  const response = await axios.post<Message[]>(url, { chatId, count })
-  return response.data
+    const url = `${API_URL}/waInstance${idInstance}/getChatHistory/${apiToken}`
+    const response = await axios.post<Message[]>(url, { chatId, count })
+    return response.data
+}
+
+
+export async function checkAccount(idInstance: string, apiToken: string, phoneNumber: string): Promise<CheckAccountResponse> {
+    const url = `${API_URL}/waInstance${idInstance}/checkAccount/${apiToken}`
+    const normalized = phoneNumber.replace(/\D/g, '')
+
+    try {
+        const response = await axios.post<CheckAccountResponse>(url, {
+            phoneNumber: Number(normalized),
+        })
+        return response.data
+    } catch (err) {
+        const error = err as AxiosError<GreenApiError>
+
+        // 1. Нет ответа — сеть, CORS, таймаут
+        if (!error.response) {
+            throw new Error('Нет соединения с GREEN-API. Проверьте интернет.')
+        }
+
+        // 2. Есть ответ — берём message из тела
+        const apiMessage = error.response.data?.message
+        if (apiMessage) {
+            throw new Error(apiMessage)
+        }
+
+        // 3. Fallback — если message нет (нестандартный ответ)
+        throw new Error(`Ошибка ${error.response.status}. Попробуйте позже`)
+    }
+}
+
+export async function sendMessage(idInstance: string, apiToken: string, chatId: string, message: string,): Promise<SendMessageResponse> {
+    const url = `${API_URL}/waInstance${idInstance}/sendMessage/${apiToken}`
+
+    try {
+        const response = await axios.post<SendMessageResponse>(url, {
+            chatId,
+            message,
+        })
+        return response.data
+    } catch (err) {
+        const error = err as AxiosError<GreenApiError>
+
+        if (!error.response) {
+            throw new Error('Нет соединения с GREEN-API')
+        }
+
+        // Специфичные статусы
+        if (error.response.status === 403) {
+            throw new Error('Аккаунт временно ограничен. Отправка возможна только на номера, сохранившие вас в контактах')
+        }
+        if (error.response.status === 500) {
+            throw new Error('Сообщение слишком большое')
+        }
+
+        // Остальное — message из API
+        const apiMessage = error.response.data?.message
+        if (apiMessage) {
+            throw new Error(apiMessage)
+        }
+
+        throw new Error(`Ошибка ${error.response.status}`)
+    }
 }

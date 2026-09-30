@@ -1,6 +1,11 @@
 import { useChatStore } from "../store/useChatStore"
 
-export function SidebarHeader() {
+interface Props {
+  onNewChat: () => void
+}
+
+
+export function SidebarHeader({ onNewChat }: Props) {
   const credentials = useChatStore((s) => s.credentials)
 
   return (
@@ -11,6 +16,7 @@ export function SidebarHeader() {
         </div>
         
         <button
+          onClick={onNewChat}
           className="w-8 h-8 rounded-full bg-emerald-500 text-white
                      flex items-center justify-center text-lg leading-none
                      hover:bg-emerald-600 transition cursor-pointer"
